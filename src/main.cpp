@@ -38,52 +38,49 @@ XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
 #define SCREEN_HEIGHT 240
 #define FONT_SIZE 2
 
-// Touchscreen coordinates: (x, y) and pressure (z)
-int x, y, z;
+#define DITPERIOD 120 // period of dit, in milliseconds
+#define LED PC13
+#define LED_RED  4
+#define LED_GREEN  16
+#define LED_BLUE  17
+#define PITCH 1200 // pitch in Hz of morse audio
+#define AUDIO 26 
 
-// Print Touchscreen info about X, Y and Pressure (Z) on the Serial Monitor
-void printTouchToSerial(int touchX, int touchY, int touchZ) {
-  Serial.print("X = ");
-  Serial.print(touchX);
-  Serial.print(" | Y = ");
-  Serial.print(touchY);
-  Serial.print(" | Pressure = ");
-  Serial.print(touchZ);
-  Serial.println();
+char cwchar = 'R';
+
+void ditSpaces(int spaces) { // user specifies #dits to wait
+for (int i=0; i<spaces; i++) // count the dits...
+  delay(DITPERIOD); // no action, just mark time
 }
 
-// Print Touchscreen info about X, Y and Pressure (Z) on the TFT Display
-void printTouchToDisplay(int touchX, int touchY, int touchZ) {
-  // Clear TFT screen
-  tft.fillScreen(TFT_WHITE);
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
+void dit() {
+digitalWrite(LED_GREEN,0); // turn on LED
+tone(AUDIO,PITCH); // and turn on sound
+ditSpaces(1);
+digitalWrite(LED_GREEN,1); // turn off LED
+noTone(AUDIO); // and turn off sound
+ditSpaces(1); // space between code elements
+}
 
-  int centerX = SCREEN_WIDTH / 2;
-  int textY = 80;
- 
-  String tempText = "X = " + String(touchX);
-  tft.drawCentreString(tempText, centerX, textY, FONT_SIZE);
-
-  textY += 20;
-  tempText = "Y = " + String(touchY);
-  tft.drawCentreString(tempText, centerX, textY, FONT_SIZE);
-
-  textY += 20;
-  tempText = "Pressure = " + String(touchZ);
-  tft.drawCentreString(tempText, centerX, textY, FONT_SIZE);
+void dah() {
+digitalWrite(LED_GREEN,0); // turn on LED
+tone(AUDIO,PITCH); // and turn on sound
+ditSpaces(3); // length of dah = 3 dits
+digitalWrite(LED_GREEN,1); // turn off LED
+noTone(AUDIO); // and turn off sound
+ditSpaces(1); // space between code elements
 }
 
 void setup() {
-  Serial.begin(115200);
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+  
+  digitalWrite(LED_GREEN,1); // turn off LED
+  digitalWrite(LED_BLUE,1);  // turn off LED
+  digitalWrite(LED_RED,1);   // turn off LED
 
-  // Start the SPI for the touchscreen and init the touchscreen
-  touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-  touchscreen.begin(touchscreenSPI);
-  // Set the Touchscreen rotation in landscape mode
-  // Note: in some displays, the touchscreen might be upside down, so you might need to set the rotation to 3: touchscreen.setRotation(3);
-  touchscreen.setRotation(3);
-
-  // Start the tft display
+   // Start the tft display
   tft.init();
   // Set the TFT display rotation in landscape mode
   tft.setRotation(3);
@@ -96,23 +93,12 @@ void setup() {
   int centerX = SCREEN_WIDTH / 2;
   int centerY = SCREEN_HEIGHT / 2;
 
-  tft.drawCentreString("Hello, world!", centerX, 30, FONT_SIZE);
-  tft.drawCentreString("Touch screen to test", centerX, centerY, FONT_SIZE);
+  tft.drawCentreString(String(cwchar), centerX, centerY, 4);
 }
 
 void loop() {
-  // Checks if Touchscreen was touched, and prints X, Y and Pressure (Z) info on the TFT display and Serial Monitor
-  if (touchscreen.tirqTouched() && touchscreen.touched()) {
-    // Get Touchscreen points
-    TS_Point p = touchscreen.getPoint();
-    // Calibrate Touchscreen points with map function to the correct width and height
-    x = map(p.x, 200, 3700, 1, SCREEN_WIDTH);
-    y = map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
-    z = p.z;
-
-    printTouchToSerial(x, y, z);
-    printTouchToDisplay(x, y, z);
-
-    delay(100);
-  }
+dit(); 
+dah();
+dit(); 	// Send “R” as an example.
+delay(1000);
 }
