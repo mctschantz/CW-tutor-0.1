@@ -24,6 +24,8 @@
 
 TFT_eSPI tft = TFT_eSPI();
 
+#include "morse.h"
+
 // Touchscreen pins
 #define XPT2046_IRQ 36   // T_IRQ
 #define XPT2046_MOSI 32  // T_DIN
@@ -71,6 +73,10 @@ noTone(AUDIO); // and turn off sound
 ditSpaces(1); // space between code elements
 }
 
+void characterSpace() {
+ditSpaces(3); // space between characters = 3 dits
+} 
+
 void setup() {
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_BLUE, OUTPUT);
@@ -93,12 +99,21 @@ void setup() {
   int centerX = SCREEN_WIDTH / 2;
   int centerY = SCREEN_HEIGHT / 2;
 
-  tft.drawCentreString(String(cwchar), centerX, centerY, 4);
+  tft.drawCentreString(String(farnsworth[6].letter), centerX, centerY, 4);
 }
 
 void loop() {
-dit(); 
-dah();
-dit(); 	// Send “R” as an example.
-delay(1000);
+  int x = farnsworth[6].bits; // get the bit pattern for the letter
+  while (x>1) {               // stop when value is 1 (or less)
+    if (x & 1) dit();         // right-most bit is 1, so dit
+    else dah();               // right-most bit is 0, so dah
+    x >>= 1;                  // shift bits right
+  }
+  characterSpace();           // add inter-character spacing
 }
+
+// dit(); 
+// dah();
+// dit(); 	// Send “R” as an example.
+// delay(1000);
+
